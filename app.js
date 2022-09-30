@@ -57,7 +57,7 @@ const httpRequest = (req, res) => {
         });
 
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ users }));
+        res.end(JSON.stringify(users));
       });
     }
   } else if (url === "/posts") {
@@ -77,9 +77,26 @@ const httpRequest = (req, res) => {
           content: post.content,
           userId: post.userId,
         });
-        res.writeHead(200, { "Content-Type": "application/json" });
+        res.writeHead(201, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ posts }));
       });
+    }
+  } else if (url === "/posts/all") {
+    if (method === "GET") {
+      let body = [];
+
+      for (let i = 0; i < posts.length; i++) {
+        body.push({
+          userId: users[i] == undefined ? i : users[i].id,
+          userName: users[i] == undefined ? `new user ${i}` : users[i].name,
+          postingId: posts[i].id,
+          postingTitle: posts[i].title,
+          postingContent: posts[i].content,
+        });
+      }
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ body }));
     }
   }
 };
