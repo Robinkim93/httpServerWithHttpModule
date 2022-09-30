@@ -31,9 +31,27 @@ const posts = [
   },
 ];
 
+const postsList = [];
+
 const httpRequest = (req, res) => {
   const { url, method } = req;
-  if (url === "/ping") {
+  if (url === "/") {
+    if (method === "GET") {
+      if (postsList.length == 0) {
+        for (let i = 0; i < posts.length; i++) {
+          postsList.push({
+            userId: users[i].id,
+            userName: users[i].name,
+            postingId: posts[i].id,
+            postingTitle: posts[i].title,
+            postingContent: posts[i].content,
+          });
+        }
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ postsList }));
+    }
+  } else if (url === "/ping") {
     if (method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ success: true }));
@@ -57,7 +75,7 @@ const httpRequest = (req, res) => {
         });
 
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(users));
+        res.end(JSON.stringify({ users }));
       });
     }
   } else if (url === "/posts") {
@@ -80,23 +98,43 @@ const httpRequest = (req, res) => {
         res.writeHead(201, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ posts }));
       });
+    } else if (method === "PATCH") {
+      let body = "";
+
+      req.on("data", (data) => {
+        body += data;
+      });
+
+      req.on("end", () => {
+        const patchPosts = JSON.parse(body);
+        console.log(body);
+        for (let i = 0; i < postsList.length; i++) {
+          if (postsList[i].postingId === patchPosts.postingId) {
+            postsList[i].postingContent = patchPosts.postingContent;
+          }
+        }
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ postsList }));
+      });
     }
   } else if (url === "/posts/all") {
     if (method === "GET") {
-      let body = [];
-
-      for (let i = 0; i < posts.length; i++) {
-        body.push({
-          userId: users[i] == undefined ? i : users[i].id,
-          userName: users[i] == undefined ? `new user ${i}` : users[i].name,
-          postingId: posts[i].id,
-          postingTitle: posts[i].title,
-          postingContent: posts[i].content,
-        });
+      if (posts.length > postsList.length) {
+        const postsListLength = postsList.length;
+        for (let i = postsListLength; i < posts.length; i++) {
+          postsList.push({
+            userId: users[i] === undefined ? i : users[i].id,
+            userName: users[i] === undefined ? `new user${i}` : users[i].name,
+            postingId: posts[i].id,
+            postingTitle: posts[i].title,
+            postingContent: posts[i].content,
+          });
+        }
       }
 
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ body }));
+      res.end(JSON.stringify({ postsList }));
     }
   }
 };
